@@ -30,6 +30,7 @@ AHandmadeCharacter::AHandmadeCharacter()
 	SpringArm->SetupAttachment(CapsuleComp);
 
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	ensure(CameraComp);
 	CameraComp->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	CameraComp->bUsePawnControlRotation = false;
 }
@@ -46,6 +47,24 @@ void AHandmadeCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (bIsInAir)
+	{
+		CurrentVelocity.Z -= 980 * DeltaTime;
+	}
+
+	FHitResult HitResult;
+	AddActorWorldOffset(FVector(0, 0, CurrentVelocity.Z) * DeltaTime, true, &HitResult);
+	AddActorLocalOffset(FVector(CurrentVelocity.X, CurrentVelocity.Y, 0) * DeltaTime, true);
+
+	if(HitResult.bBlockingHit)
+	{ 
+		CurrentVelocity = FVector::ZeroVector;
+		bIsInAir = false;
+	}
+	else
+	{
+		bIsInAir = true;
+	}
 }
 
 // Called to bind functionality to input
@@ -76,6 +95,16 @@ void AHandmadeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 					&AHandmadeCharacter::Look
 				);
 			}
+
+			if (PlayerController->JumpAction)
+			{
+				EnhancedInput->BindAction(
+					PlayerController->JumpAction,
+					ETriggerEvent::Triggered,
+					this,
+					&AHandmadeCharacter::StartJump
+				);
+			}
 		}
 	}
 }
@@ -86,7 +115,21 @@ void AHandmadeCharacter::Move(const FInputActionValue& Value)
 	MoveInput.Normalize();
 	MoveInput *= MoveSpeed;
 
-	AddActorLocalOffset(FVector(MoveInput.X, MoveInput.Y, 0), true);
+	if (bIsInAir)
+	{
+		MoveInput *= AirMovementMultiplier;
+	}
+
+	FVector2D HorizontalVelocity(CurrentVelocity.X + MoveInput.X, CurrentVelocity.Y + MoveInput.Y);
+
+	if (HorizontalVelocity.Size() >= MaxSpeed)
+	{
+		HorizontalVelocity.Normalize();
+		HorizontalVelocity *= MaxSpeed;
+	}
+
+	CurrentVelocity.X = HorizontalVelocity.X;
+	CurrentVelocity.Y = HorizontalVelocity.Y;
 }
 
 void AHandmadeCharacter::Look(const FInputActionValue& Value)
@@ -98,5 +141,13 @@ void AHandmadeCharacter::Look(const FInputActionValue& Value)
 
 	SpringArm->AddLocalRotation(FRotator(LookInput.X, 0, 0));
 	SpringArm->SetWorldRotation(FRotator(SpringArm->GetComponentRotation().Pitch, CharacterRotation.Yaw, CharacterRotation.Roll));
+}
+
+void AHandmadeCharacter::StartJump(const FInputActionValue& Value)
+{
+	if (Value.Get<bool>() && bIsInAir == false)
+	{
+		CurrentVelocity.Z = JumpPower;
+	}
 }
 

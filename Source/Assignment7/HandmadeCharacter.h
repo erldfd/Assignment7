@@ -29,6 +29,9 @@ protected:
 	UFUNCTION()
 	void Look(const FInputActionValue& Value);
 
+	UFUNCTION()
+	void StartJump(const FInputActionValue& Value);
+
 protected:
 
 	UPROPERTY(VisibleAnywhere)
@@ -43,6 +46,19 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	class UCameraComponent* CameraComp;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Movement")
 	int MoveSpeed = 10;
+
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	float MaxSpeed = 100.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	float JumpPower = 500.0f;
+
+	FVector CurrentVelocity = FVector::ZeroVector;
+
+	bool bIsInAir = false;
+
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	float AirMovementMultiplier = 0.1f;
 };
