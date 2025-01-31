@@ -33,8 +33,23 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	UInputAction* JumpAction;
 
+public: // Drone
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DroneInput")
+	UInputMappingContext* DroneInputMappingContext;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DroneInput")
+	UInputAction* DroneMoveAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DroneInput")
+	UInputAction* DroneRotatingAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DroneInput")
+	UInputAction* DroneRollingAction;
+
 protected:
 
 	virtual void BeginPlay() override;
-	
+
+	virtual void OnPossess(APawn* PawnToPossess) override;
 };
